@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0f1e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LearnPro">
+<title>LearnPro — Code & Markets</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060b18;
+    --surface: #0d1628;
+    --surface2: #131f35;
+    --border: #1e2d4a;
+    --accent: #00e5ff;
+    --accent2: #7c3aed;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #e2eaf5;
+    --muted: #6b7fa3;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+    --radius: 16px;
+    --tab-h: 64px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--font-body); }
+
+  /* ── SPLASH ── */
+  #splash {
+    position:fixed; inset:0; background:var(--bg); display:flex;
+    flex-direction:column; align-items:center; justify-content:center;
+    z-index:999; transition:opacity .5s ease;
+  }
+  #splash .logo-ring {
+    width:90px; height:90px; border-radius:50%;
+    border:3px solid transparent;
+    background: linear-gradient(var(--bg),var(--bg)) padding-box,
+                linear-gradient(135deg,var(--accent),var(--accent2)) border-box;
+    display:flex; align-items:center; justify-content:center;
+    font-size:36px; margin-bottom:20px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,229,255,.4)} 50%{box-shadow:0 0 0 20px rgba(0,229,255,0)} }
+  #splash h1 { font-family:var(--font-head); font-size:32px; font-weight:800; letter-spacing:-1px; }
+  #splash h1 span { color:var(--accent); }
+  #splash p { color:var(--muted); font-size:14px; margin-top:8px; }
+  #splash .bar { width:180px; height:3px; background:var(--surface2); border-radius:99px; margin-top:32px; overflow:hidden; }
+  #splash .bar-fill { height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:99px; animation: load 1.8s ease forwards; }
+  @keyframes load { to { width:100%; } }
+
+  /* ── LAYOUT ── */
+  #app { display:none; height:100%; flex-direction:column; }
+  #app.visible { display:flex; }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 52px 20px 16px;
+    background: linear-gradient(180deg, rgba(0,229,255,.07) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-row { display:flex; align-items:center; justify-content:space-between; }
+  .header-title { font-family:var(--font-head); font-size:22px; font-weight:800; }
+  .header-title span { color:var(--accent); }
+  .xp-pill {
+    display:flex; align-items:center; gap:6px;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:99px; padding:6px 12px; font-size:12px; font-weight:600;
+    color:var(--gold);
+  }
+  .xp-pill .dot { width:7px; height:7px; background:var(--gold); border-radius:50%; }
+  .streak-row { display:flex; align-items:center; gap:8px; margin-top:10px; }
+  .streak-badge {
+    display:flex; align-items:center; gap:5px;
+    font-size:12px; color:var(--muted);
+  }
+  .progress-bar { flex:1; height:5px; background:var(--surface2); border-radius:99px; overflow:hidden; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:99px; transition:width .6s ease; }
+
+  /* ── SCROLL AREA ── */
+  .scroll-area { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; padding:20px 16px calc(var(--tab-h) + 16px); }
+  .scroll-area::-webkit-scrollbar { display:none; }
+
+  /* ── TABS ── */
+  .tab-bar {
+    position:fixed; bottom:0; left:0; right:0;
+    height:var(--tab-h); background:var(--surface);
+    border-top:1px solid var(--border);
+    display:flex; align-items:center;
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    z-index:100; padding-bottom:env(safe-area-inset-bottom);
+  }
+  .tab {
+    flex:1; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:3px; cursor:pointer;
+    padding:8px 4px; transition:all .2s;
+    font-family:var(--font-body); font-size:10px; color:var(--muted);
+    border:none; background:none;
+  }
+  .tab .icon { font-size:22px; transition:transform .2s; }
+  .tab.active { color:var(--accent); }
+  .tab.active .icon { transform:translateY(-2px); }
+
+  /* ── SCREENS ── */
+  .screen { display:none; }
+  .screen.active { display:block; }
+
+  /* ── SECTION TITLE ── */
+  .section-label {
+    font-family:var(--font-head); font-size:13px; font-weight:700;
+    letter-spacing:2px; text-transform:uppercase;
+    color:var(--muted); margin-bottom:12px; margin-top:24px;
+  }
+  .section-label:first-child { margin-top:0; }
+
+  /* ── CARDS ── */
+  .card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:16px; margin-bottom:12px;
+    cursor:pointer; transition:all .2s; position:relative; overflow:hidden;
+  }
+  .card:active { transform:scale(.98); }
+  .card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    opacity:0; transition:opacity .2s;
+  }
+  .card:active::before { opacity:1; }
+  .card-row { display:flex; align-items:center; gap:12px; }
+  .card-icon {
+    width:44px; height:44px; border-radius:12px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:22px;
+  }
+  .card-icon.blue { background:rgba(0,229,255,.12); }
+  .card-icon.purple { background:rgba(124,58,237,.12); }
+  .card-icon.gold { background:rgba(245,158,11,.12); }
+  .card-icon.green { background:rgba(16,185,129,.12); }
+  .card-title { font-family:var(--font-head); font-size:15px; font-weight:700; }
+  .card-sub { font-size:12px; color:var(--muted); margin-top:2px; }
+  .card-badge {
+    margin-left:auto; background:var(--surface2); border-radius:99px;
+    padding:4px 10px; font-size:11px; font-weight:600; white-space:nowrap;
+  }
+  .card-badge.new { background:rgba(0,229,255,.15); color:var(--accent); }
+  .card-badge.hot { background:rgba(239,68,68,.15); color:var(--red); }
+  .card-badge.done { background:rgba(16,185,129,.15); color:var(--green); }
+
+  /* ── LESSON VIEW ── */
+  #lesson-view {
+    display:none; position:fixed; inset:0; background:var(--bg);
+    z-index:200; flex-direction:column; overflow:hidden;
+  }
+  #lesson-view.open { display:flex; }
+  .lesson-header {
+    display:flex; align-items:center; gap:12px;
+    padding: 52px 16px 16px;
+    border-bottom:1px solid var(--border);
+    background:var(--surface);
+  }
+  .btn-back {
+    width:36px; height:36px; border-radius:10px;
+    background:var(--surface2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; cursor:pointer; flex-shrink:0;
+  }
+  .lesson-title { font-family:var(--font-head); font-size:17px; font-weight:700; flex:1; }
+  .lesson-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px 16px 100px; }
+  .lesson-body::-webkit-scrollbar { display:none; }
+  .lesson-content { font-size:15px; line-height:1.75; color:var(--text); }
+  .lesson-content h2 { font-family:var(--font-head); font-size:18px; font-weight:700; margin:20px 0 10px; color:var(--accent); }
+  .lesson-content p { margin-bottom:14px; }
+  .lesson-content ul { padding-left:20px; margin-bottom:14px; }
+  .lesson-content li { margin-bottom:6px; }
+  .code-block {
+    background:var(--surface2); border:1px solid var(--border); border-radius:12px;
+    padding:16px; font-family:var(--font-mono); font-size:13px; line-height:1.8;
+    overflow-x:auto; margin:14px 0; color:#a5f3fc;
+    border-left:3px solid var(--accent);
+  }
+  .code-block .kw { color:#c084fc; }
+  .code-block .str { color:#86efac; }
+  .code-block .num { color:var(--gold); }
+  .code-block .cmt { color:var(--muted); }
+  .highlight-box {
+    background:rgba(0,229,255,.06); border:1px solid rgba(0,229,255,.2);
+    border-radius:12px; padding:14px 16px; margin:14px 0;
+  }
+  .highlight-box .label { font-size:11px; font-weight:700; letter-spacing:1.5px; color:var(--accent); text-transform:uppercase; margin-bottom:6px; }
+
+  /* ── QUIZ ── */
+  .quiz-section { margin-top:24px; }
+  .quiz-q { font-family:var(--font-head); font-size:16px; font-weight:700; margin-bottom:14px; }
+  .quiz-opt {
+    display:block; width:100%; text-align:left;
+    background:var(--surface2); border:1.5px solid var(--border);
+    border-radius:12px; padding:13px 16px; margin-bottom:10px;
+    font-family:var(--font-body); font-size:14px; color:var(--text);
+    cursor:pointer; transition:all .2s;
+  }
+  .quiz-opt:active { transform:scale(.98); }
+  .quiz-opt.correct { border-color:var(--green); background:rgba(16,185,129,.1); color:var(--green); }
+  .quiz-opt.wrong { border-color:var(--red); background:rgba(239,68,68,.1); color:var(--red); }
+  .quiz-feedback { font-size:13px; padding:10px 14px; border-radius:10px; margin-top:4px; display:none; }
+  .quiz-feedback.show { display:block; }
+  .quiz-feedback.ok { background:rgba(16,185,129,.1); color:var(--green); }
+  .quiz-feedback.bad { background:rgba(239,68,68,.1); color:var(--red); }
+  .btn-next {
+    display:block; width:100%; margin-top:20px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#fff; border:none; border-radius:14px;
+    padding:16px; font-family:var(--font-head); font-size:16px; font-weight:700;
+    cursor:pointer; transition:opacity .2s; display:none;
+  }
+  .btn-next.show { display:block; }
+
+  /* ── STOCK TICKER ── */
+  .ticker-wrap { overflow:hidden; margin-bottom:16px; }
+  .ticker-track {
+    display:flex; gap:12px; animation:ticker 20s linear infinite;
+    white-space:nowrap;
+  }
+  @keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  .ticker-item {
+    flex-shrink:0; background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; padding:8px 14px; display:flex; flex-direction:column;
+  }
+  .ticker-sym { font-family:var(--font-mono); font-size:13px; font-weight:700; }
+  .ticker-price { font-size:12px; color:var(--muted); }
+  .ticker-chg { font-size:11px; font-weight:600; }
+  .up { color:var(--green); }
+  .down { color:var(--red); }
+
+  /* ── MARKET CHART ── */
+  .chart-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:16px; margin-bottom:12px;
+  }
+  .chart-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+  .chart-name { font-family:var(--font-head); font-size:16px; font-weight:700; }
+  .chart-price { font-size:22px; font-weight:700; font-family:var(--font-mono); }
+  .chart-change { font-size:13px; font-weight:600; }
+  canvas.sparkline { width:100%; height:70px; }
+  .chart-tabs { display:flex; gap:6px; margin-bottom:12px; }
+  .chart-tab {
+    padding:5px 12px; border-radius:99px; font-size:12px; font-weight:600;
+    border:1px solid var(--border); background:transparent; color:var(--muted);
+    cursor:pointer; transition:all .2s;
+  }
+  .chart-tab.active { background:var(--accent); color:#000; border-color:var(--accent); }
+
+  /* ── PROFILE ── */
+  .profile-hero {
+    background:linear-gradient(135deg,rgba(0,229,255,.08),rgba(124,58,237,.08));
+    border:1px solid var(--border); border-radius:var(--radius);
+    padding:24px; margin-bottom:16px; text-align:center;
+  }
+  .avatar {
+    width:72px; height:72px; border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex; align-items:center; justify-content:center;
+    font-size:32px; margin:0 auto 12px;
+    box-shadow:0 0 0 4px rgba(0,229,255,.2);
+  }
+  .profile-name { font-family:var(--font-head); font-size:20px; font-weight:800; }
+  .profile-level { font-size:13px; color:var(--muted); margin-top:4px; }
+  .stats-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:16px; }
+  .stat { background:var(--surface2); border-radius:12px; padding:12px; text-align:center; }
+  .stat-val { font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--accent); }
+  .stat-lbl { font-size:11px; color:var(--muted); margin-top:3px; }
+  .achievement-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .achievement {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:12px; padding:14px; display:flex; align-items:center; gap:10px;
+  }
+  .ach-icon { font-size:28px; }
+  .ach-name { font-size:13px; font-weight:600; }
+  .ach-desc { font-size:11px; color:var(--muted); }
+
+  /* ── FLOATING TOAST ── */
+  .toast {
+    position:fixed; bottom:calc(var(--tab-h) + 16px); left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:12px; padding:12px 20px;
+    font-size:14px; font-weight:600; color:var(--accent);
+    opacity:0; transition:all .3s; z-index:500; white-space:nowrap;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ── HOME HERO ── */
+  .home-hero {
+    background:linear-gradient(135deg,rgba(0,229,255,.08),rgba(124,58,237,.08));
+    border:1px solid rgba(0,229,255,.15); border-radius:var(--radius);
+    padding:20px; margin-bottom:20px; position:relative; overflow:hidden;
+  }
+  .home-hero::after {
+    content:''; position:absolute; top:-40px; right:-40px;
+    width:130px; height:130px; border-radius:50%;
+    background:radial-gradient(circle,rgba(0,229,255,.15),transparent);
+  }
+  .hero-greeting { font-size:13px; color:var(--muted); margin-bottom:4px; }
+  .hero-msg { font-family:var(--font-head); font-size:20px; font-weight:800; line-height:1.3; }
+  .hero-msg span { color:var(--accent); }
+  .hero-cta {
+    margin-top:14px; display:inline-flex; align-items:center; gap:6px;
+    background:var(--accent); color:#000; border:none; border-radius:99px;
+    padding:10px 18px; font-family:var(--font-head); font-size:13px; font-weight:700;
+    cursor:pointer; transition:opacity .2s;
+  }
+  .hero-cta:active { opacity:.8; }
+
+  /* ── CODING EDITOR ── */
+  .editor-wrap {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:var(--radius); overflow:hidden; margin-top:14px;
+  }
+  .editor-bar {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px; border-bottom:1px solid var(--border);
+    background:var(--surface);
+  }
+  .editor-lang { font-family:var(--font-mono); font-size:12px; color:var(--muted); }
+  .btn-run {
+    background:var(--green); color:#000; border:none; border-radius:8px;
+    padding:6px 14px; font-family:var(--font-mono); font-size:12px; font-weight:700;
+    cursor:pointer; display:flex; align-items:center; gap:5px;
+  }
+  textarea.code-input {
+    width:100%; min-height:120px; background:transparent;
+    border:none; outline:none; padding:14px;
+    font-family:var(--font-mono); font-size:13px; color:#a5f3fc;
+    resize:none; line-height:1.8;
+  }
+  .output-box {
+    border-top:1px solid var(--border); padding:12px 14px;
+    font-family:var(--font-mono); font-size:13px; color:var(--green);
+    min-height:40px; background:rgba(0,0,0,.3);
+  }
+
+  /* ── GLOSSARY ── */
+  .glossary-item {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:14px 16px; margin-bottom:10px;
+    cursor:pointer; transition:all .2s;
+  }
+  .glossary-item:active { transform:scale(.98); }
+  .glossary-term { font-family:var(--font-head); font-size:15px; font-weight:700; color:var(--accent); }
+  .glossary-def { font-size:13px; color:var(--muted); margin-top:4px; line-height:1.5; }
+
+  /* Scrollable pill tabs */
+  .pill-tabs { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px; }
+  .pill-tabs::-webkit-scrollbar { display:none; }
+  .pill {
+    flex-shrink:0; padding:7px 16px; border-radius:99px;
+    border:1px solid var(--border); background:transparent;
+    font-family:var(--font-body); font-size:13px; font-weight:500; color:var(--muted);
+    cursor:pointer; transition:all .2s; white-space:nowrap;
+  }
+  .pill.active { background:var(--accent); color:#000; border-color:var(--accent); font-weight:700; }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="logo-ring">📈</div>
+  <h1>Learn<span>Pro</span></h1>
+  <p>Code & Markets Academy</p>
+  <div class="bar"><div class="bar-fill"></div></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-row">
+      <div class="header-title">Learn<span>Pro</span></div>
+      <div class="xp-pill"><div class="dot"></div><span id="xp-count">340 XP</span></div>
+    </div>
+    <div class="streak-row">
+      <div class="streak-badge">🔥 <span id="streak">7 day streak</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="level-bar" style="width:68%"></div></div>
+      <span style="font-size:11px;color:var(--muted);">Lvl 4</span>
+    </div>
+  </div>
+
+  <!-- Screens -->
+  <div class="scroll-area">
+
+    <!-- HOME -->
+    <div class="screen active" id="screen-home">
+      <div class="home-hero">
+        <div class="hero-greeting">Good day, Learner 👋</div>
+        <div class="hero-msg">Ready to master <span>Code & Markets</span> today?</div>
+        <button class="hero-cta" onclick="openLesson('py-intro')">▶ Continue Learning</button>
+      </div>
+
+      <div class="section-label">🚀 Trending Lessons</div>
+      <div class="card" onclick="openLesson('py-intro')">
+        <div class="card-row">
+          <div class="card-icon blue">🐍</div>
+          <div><div class="card-title">Python Basics</div><div class="card-sub">Variables, loops, functions</div></div>
+          <div class="card-badge done">✓ Done</div>
+        </div>
+      </div>
+      <div class="card" onclick="openLesson('js-intro')">
+        <div class="card-row">
+          <div class="card-icon gold">⚡</div>
+          <div><div class="card-title">JavaScript Crash</div><div class="card-sub">DOM, events, ES6+</div></div>
+          <div class="card-badge new">New</div>
+        </div>
+      </div>
+      <div class="card" onclick="openLesson('stocks-basics')">
+        <div class="card-row">
+          <div class="card-icon green">📊</div>
+          <div><div class="card-title">Stock Market 101</div><div class="card-sub">How markets work</div></div>
+          <div class="card-badge hot">🔥 Hot</div>
+        </div>
+      </div>
+      <div class="card" onclick="openLesson('candlestick')">
+        <div class="card-row">
+          <div class="card-icon gold">🕯️</div>
+          <div><div class="card-title">Candlestick Charts</div><div class="card-sub">Read price action</div></div>
+          <div class="card-badge new">New</div>
+        </div>
+      </div>
+
+      <div class="section-label">💡 Daily Challenge</div>
+      <div class="card" onclick="openLesson('daily')">
+        <div class="card-row">
+          <div class="card-icon purple">🎯</div>
+          <div><div class="card-title">Today's Quiz</div><div class="card-sub">5 questions · +50 XP reward</div></div>
+          <div class="card-badge new">Start</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CODING -->
+    <div class="screen" id="screen-code">
+      <div class="pill-tabs" id="code-tabs">
+        <button class="pill active" onclick="switchCodeTab('python',this)">Python</button>
+        <button class="pill" onclick="switchCodeTab('javascript',this)">JavaScript</button>
+        <button class="pill" onclick="switchCodeTab('html',this)">HTML/CSS</button>
+        <button class="pill" onclick="switchCodeTab('sql',this)">SQL</button>
+        <button class="pill" onclick="switchCodeTab('algorithms',this)">Algorithms</button>
+      </div>
+
+      <div id="code-content"></div>
+    </div>
+
+    <!-- MARKETS -->
+    <div class="screen" id="screen-markets">
+      <div class="section-label">📡 Live Quotes (Simulated)</div>
+      <div class="ticker-wrap">
+        <div class="ticker-track" id="ticker"></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-name">AAPL · Apple Inc.</div>
+            <div class="chart-change up">▲ +1.84%</div>
+          </div>
+          <div class="chart-price up">$189.42</div>
+        </div>
+        <div class="chart-tabs">
+          <button class="chart-tab active" onclick="redraw('aapl',this,'1D')">1D</button>
+          <button class="chart-tab" onclick="redraw('aapl',this,'1W')">1W</button>
+          <button class="chart-tab" onclick="redraw('aapl',this,'1M')">1M</button>
+        </div>
+        <canvas class="sparkline" id="chart-aapl" height="70"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-name">BTC · Bitcoin</div>
+            <div class="chart-change down">▼ -2.13%</div>
+          </div>
+          <div class="chart-price down">$61,220</div>
+        </div>
+        <div class="chart-tabs">
+          <button class="chart-tab active" onclick="redraw('btc',this,'1D')">1D</button>
+          <button class="chart-tab" onclick="redraw('btc',this,'1W')">1W</button>
+          <button class="chart-tab" onclick="redraw('btc',this,'1M')">1M</button>
+        </div>
+        <canvas class="sparkline" id="chart-btc" height="70"></canvas>
+      </div>
+
+      <div class="section-label">📖 Market Glossary</div>
+      <div id="glossary-list"></div>
+    </div>
+
+    <!-- PRACTICE -->
+    <div class="screen" id="screen-practice">
+      <div class="section-label">🖊 Code Playground</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Write and run Python/JS logic (simulated output)</p>
+      <div class="pill-tabs" id="lang-tabs">
+        <button class="pill active" onclick="setLang('python',this)">Python</button>
+        <button class="pill" onclick="setLang('javascript',this)">JavaScript</button>
+      </div>
+      <div class="editor-wrap">
+        <div class="editor-bar">
+          <span class="editor-lang" id="editor-lang">python</span>
+          <button class="btn-run" onclick="runCode()">▶ Run</button>
+        </div>
+        <textarea class="code-input" id="code-editor" spellcheck="false" placeholder="# Write your code here...
+x = 10
+y = 20
+print(x + y)"></textarea>
+        <div class="output-box" id="code-output">Output will appear here...</div>
+      </div>
+
+      <div class="section-label" style="margin-top:24px;">🧠 Challenges</div>
+      <div class="card" onclick="openLesson('challenge1')">
+        <div class="card-row">
+          <div class="card-icon blue">🟢</div>
+          <div><div class="card-title">FizzBuzz</div><div class="card-sub">Beginner · Python</div></div>
+          <div class="card-badge new">+20 XP</div>
+        </div>
+      </div>
+      <div class="card" onclick="openLesson('challenge2')">
+        <div class="card-row">
+          <div class="card-icon gold">🟡</div>
+          <div><div class="card-title">Stock Profit Calculator</div><div class="card-sub">Intermediate · Python</div></div>
+          <div class="card-badge new">+40 XP</div>
+        </div>
+      </div>
+      <div class="card" onclick="openLesson('challenge3')">
+        <div class="card-row">
+          <div class="card-icon purple">🔴</div>
+          <div><div class="card-title">Moving Average</div><div class="card-sub">Advanced · Python</div></div>
+          <div class="card-badge new">+80 XP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="screen" id="screen-profile">
+      <div class="profile-hero">
+        <div class="avatar">👨‍💻</div>
+        <div class="profile-name">Learner Pro</div>
+        <div class="profile-level">Level 4 · Python Apprentice</div>
+        <div class="stats-grid">
+          <div class="stat"><div class="stat-val" id="s-xp">340</div><div class="stat-lbl">XP</div></div>
+          <div class="stat"><div class="stat-val">7</div><div class="stat-lbl">Streak</div></div>
+          <div class="stat"><div class="stat-val">12</div><div class="stat-lbl">Lessons</div></div>
+        </div>
+      </div>
+
+      <div class="section-label">🏆 Achievements</div>
+      <div class="achievement-grid">
+        <div class="achievement"><div class="ach-icon">🔥</div><div><div class="ach-name">Week Streak</div><div class="ach-desc">7 days in a row</div></div></div>
+        <div class="achievement"><div class="ach-icon">🐍</div><div><div class="ach-name">Pythonista</div><div class="ach-desc">Finished Python 101</div></div></div>
+        <div class="achievement"><div class="ach-icon">📈</div><div><div class="ach-name">Trader</div><div class="ach-desc">Stocks module done</div></div></div>
+        <div class="achievement"><div class="ach-icon">🎯</div><div><div class="ach-name">Quiz Master</div><div class="ach-desc">5 perfect quizzes</div></div></div>
+        <div class="achievement" style="opacity:.35"><div class="ach-icon">💎</div><div><div class="ach-name">Diamond</div><div class="ach-desc">30 day streak</div></div></div>
+        <div class="achievement" style="opacity:.35"><div class="ach-icon">🚀</div><div><div class="ach-name">Rockstar</div><div class="ach-desc">100 lessons done</div></div></div>
+      </div>
+    </div>
+
+  </div><!-- /scroll-area -->
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('home',this)"><span class="icon">🏠</span>Home</button>
+    <button class="tab" onclick="switchTab('code',this)"><span class="icon">💻</span>Learn</button>
+    <button class="tab" onclick="switchTab('markets',this)"><span class="icon">📈</span>Markets</button>
+    <button class="tab" onclick="switchTab('practice',this)"><span class="icon">🎮</span>Practice</button>
+    <button class="tab" onclick="switchTab('profile',this)"><span class="icon">👤</span>Profile</button>
+  </div>
+</div>
+
+<!-- LESSON VIEW -->
+<div id="lesson-view">
+  <div class="lesson-header">
+    <div class="btn-back" onclick="closeLesson()">←</div>
+    <div class="lesson-title" id="lesson-title">Lesson</div>
+    <div class="xp-pill"><div class="dot"></div>+30 XP</div>
+  </div>
+  <div class="lesson-body">
+    <div class="lesson-content" id="lesson-content"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────
+const lessons = {
+  'py-intro': {
+    title: 'Python Basics',
+    xp: 30,
+    content: `
+      <h2>What is Python?</h2>
+      <p>Python is a high-level, easy-to-read programming language used in web development, data science, automation, and even stock market analysis.</p>
+      <div class="highlight-box"><div class="label">💡 Fun Fact</div>Python is the #1 language used by Wall Street quantitative analysts (quants) to build trading algorithms.</div>
+      <h2>Variables</h2>
+      <p>A variable stores data. In Python, you don't need to declare a type:</p>
+      <div class="code-block"><span class="cmt"># Storing stock data</span>
+stock_name = <span class="str">"AAPL"</span>
+price = <span class="num">189.42</span>
+shares = <span class="num">10</span>
+total = price * shares
+<span class="kw">print</span>(<span class="str">f"Total value: ${total}"</span>)</div>
+      <h2>Lists</h2>
+      <p>Lists store multiple values — perfect for storing historical prices:</p>
+      <div class="code-block">prices = [<span class="num">185</span>, <span class="num">187</span>, <span class="num">189</span>, <span class="num">192</span>, <span class="num">188</span>]
+<span class="kw">print</span>(<span class="str">"Highest:"</span>, <span class="kw">max</span>(prices))
+<span class="kw">print</span>(<span class="str">"Lowest:"</span>, <span class="kw">min</span>(prices))</div>
+      <h2>Loops</h2>
+      <p>Loops repeat code. Useful for processing lots of market data:</p>
+      <div class="code-block"><span class="kw">for</span> p <span class="kw">in</span> prices:
+    <span class="kw">if</span> p > <span class="num">190</span>:
+        <span class="kw">print</span>(<span class="str">f"High price: {p}"</span>)</div>
+      <div class="quiz-section">
+        <div class="quiz-q">❓ What does <code>max(prices)</code> return?</div>
+        <button class="quiz-opt" onclick="answer(this,false)">The first price in the list</button>
+        <button class="quiz-opt" onclick="answer(this,true)">The largest value in the list</button>
+        <button class="quiz-opt" onclick="answer(this,false)">The sum of all prices</button>
+        <div class="quiz-feedback" id="qfb">✓ Correct! <code>max()</code> returns the largest value.</div>
+        <button class="btn-next" id="btn-next" onclick="completeLesson('py-intro')">Complete & Earn XP →</button>
+      </div>`,
+  },
+  'js-intro': {
+    title: 'JavaScript Crash',
+    xp: 30,
+    content: `
+      <h2>JavaScript Overview</h2>
+      <p>JavaScript (JS) runs in every browser. It's used to build interactive web apps, trading dashboards, and real-time data visualisations.</p>
+      <h2>Variables & Types</h2>
+      <div class="code-block"><span class="kw">let</span> stockPrice = <span class="num">189.42</span>;
+<span class="kw">const</span> company = <span class="str">"Apple"</span>;
+<span class="kw">let</span> isUp = <span class="kw">true</span>;</div>
+      <h2>Functions</h2>
+      <div class="code-block"><span class="kw">function</span> calcProfit(buyPrice, sellPrice, qty) {
+  <span class="kw">return</span> (sellPrice - buyPrice) * qty;
+}
+console.<span class="kw">log</span>(calcProfit(<span class="num">150</span>, <span class="num">189</span>, <span class="num">10</span>)); <span class="cmt">// 390</span></div>
+      <h2>Arrays & Map</h2>
+      <div class="code-block"><span class="kw">const</span> prices = [<span class="num">181</span>, <span class="num">185</span>, <span class="num">190</span>, <span class="num">188</span>];
+<span class="kw">const</span> gains = prices.<span class="kw">map</span>(p => p * <span class="num">1.05</span>);
+console.<span class="kw">log</span>(gains);</div>
+      <div class="quiz-section">
+        <div class="quiz-q">❓ What keyword creates a constant in JS?</div>
+        <button class="quiz-opt" onclick="answer(this,false)">var</button>
+        <button class="quiz-opt" onclick="answer(this,false)">let</button>
+        <button class="quiz-opt" onclick="answer(this,true)">const</button>
+        <div class="quiz-feedback" id="qfb">✓ Correct! <code>const</code> creates a variable that can't be reassigned.</div>
+        <button class="btn-next" id="btn-next" onclick="completeLesson('js-intro')">Complete & Earn XP →</button>
+      </div>`,
+  },
+  'stocks-basics': {
+    title: 'Stock Market 101',
+    xp: 40,
+    content: `
+      <h2>What is a Stock?</h2>
+      <p>A stock is a share of ownership in a company. When you buy 1 share of Apple (AAPL), you own a tiny piece of Apple Inc.</p>
+      <div class="highlight-box"><div class="label">📌 Key Concept</div>Companies sell stocks to raise money. Investors buy stocks hoping the company grows and the stock price rises.</div>
+      <h2>Stock Exchanges</h2>
+      <p>Stocks are traded on exchanges like:</p>
+      <ul>
+        <li><strong>NYSE</strong> — New York Stock Exchange (oldest, biggest)</li>
+        <li><strong>NASDAQ</strong> — Tech-heavy (Apple, Google, Meta)</li>
+        <li><strong>PSX</strong> — Pakistan Stock Exchange (Karachi)</li>
+      </ul>
+      <h2>Bull vs Bear Market</h2>
+      <div class="code-block"><span class="cmt"># Bull Market = prices rising (optimism) 🐂</span>
+<span class="cmt"># Bear Market = prices falling (pessimism) 🐻</span>
+
+market = <span class="str">"bull"</span>
+<span class="kw">if</span> market == <span class="str">"bull"</span>:
+    <span class="kw">print</span>(<span class="str">"Buy and hold!"</span>)
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">"Sell or wait."</span>)</div>
+      <h2>Key Terms</h2>
+      <ul>
+        <li><strong>Ticker</strong> — Short code for a stock (AAPL, MSFT, TSLA)</li>
+        <li><strong>Dividend</strong> — Cash paid by company to shareholders</li>
+        <li><strong>Market Cap</strong> — Total value of all shares combined</li>
+        <li><strong>IPO</strong> — Initial Public Offering — when a company first lists</li>
+        <li><strong>Portfolio</strong> — Your collection of investments</li>
+      </ul>
+      <div class="quiz-section">
+        <div class="quiz-q">❓ A "Bear Market" means prices are...</div>
+        <button class="quiz-opt" onclick="answer(this,false)">Rising rapidly</button>
+        <button class="quiz-opt" onclick="answer(this,true)">Falling / declining</button>
+        <button class="quiz-opt" onclick="answer(this,false)">Staying flat</button>
+        <div class="quiz-feedback" id="qfb">✓ Correct! A bear market = declining prices. Bears swipe downward! 🐻</div>
+        <button class="btn-next" id="btn-next" onclick="completeLesson('stocks-basics')">Complete & Earn XP →</button>
+      </div>`,
+  },
+  'candlestick': {
+    title: 'Candlestick Charts',
+    xp: 40,
+    content: `
+      <h2>Reading Candlesticks</h2>
+      <p>Candlestick charts show price movement in a period (1 min, 1 day, etc.) using four key values:</p>
+      <div class="highlight-box">
+        <div class="label">OHLC</div>
+        <strong>O</strong>pen · <strong>H</strong>igh · <strong>L</strong>ow · <strong>C</strong>lose
+      </div>
+      <h2>Green Candle (Bullish 🟢)</h2>
+      <p>Open is at the bottom, Close is at the top. Price went UP during this period.</p>
+      <div class="code-block">open  = <span class="num">180</span>
+close = <span class="num">189</span>  <span class="cmt"># close > open = green</span>
+high  = <span class="num">192</span>
+low   = <span class="num">178</span></div>
+      <h2>Red Candle (Bearish 🔴)</h2>
+      <p>Open is at the top, Close is at the bottom. Price went DOWN.</p>
+      <div class="code-block">open  = <span class="num">189</span>
+close = <span class="num">182</span>  <span class="cmt"># close < open = red</span></div>
+      <h2>The Wick (Shadow)</h2>
+      <p>The thin lines above/below the body show the High and Low extremes reached during the period.</p>
+      <div class="highlight-box"><div class="label">Pro Tip</div>A long lower wick = buyers stepped in and pushed price back up — often a reversal signal!</div>
+      <div class="quiz-section">
+        <div class="quiz-q">❓ If Open=100 and Close=115, what colour is the candle?</div>
+        <button class="quiz-opt" onclick="answer(this,true)">🟢 Green (Bullish)</button>
+        <button class="quiz-opt" onclick="answer(this,false)">🔴 Red (Bearish)</button>
+        <div class="quiz-feedback" id="qfb">✓ Correct! Close > Open = Green = price moved up! 🟢</div>
+        <button class="btn-next" id="btn-next" onclick="completeLesson('candlestick')">Complete & Earn XP →</button>
+      </div>`,
+  },
+  'daily': {
+    title: "Today's Challenge",
+    xp: 50,
+    content: `
+      <h2>Daily Quiz — 5 Questions</h2>
+      <p style="color:var(--muted);font-size:13px;">Answer all questions to earn <strong style="color:var(--gold)">+50 XP</strong>!</p>
+      <div class="quiz-section" style="margin-top:20px">
+        <div class="quiz-q">Q1. What symbol is used for Python comments?</div>
+        <button class="quiz-opt" onclick="answer(this,false)">//</button>
+        <button class="quiz-opt" onclick="answer(this,true)">#</button>
+        <button class="quiz-opt" onclick="answer(this,false)">/* */</button>
+        <div class="quiz-feedback" id="qfb">✓ Correct! Python uses # for single-line comments.</div>
+        <button class="btn-next" id="btn-next" onclick="completeLesson('daily')">Claim 50 XP 🎉</button>
+      </div>`,
+  },
+  'challenge1': {
+    title: 'FizzBuzz Challenge',
+    xp: 20,
+    content: `
+      <h2>FizzBuzz — Classic Interview Question</h2>
+      <p>Print numbers 1–20. For multiples of 3 print "Fizz", for multiples of 5 print "Buzz", for both print "FizzBuzz".</p>
+      <div class="code-block"><span class="kw">for</span> i <span class="kw">in</span> <span class="kw">range</span>(<span class="num">1</span>, <span class="num">21</span>):
+    <span class="kw">if</span> i % <span class="num">15</span> == <span class="num">0</span>:
+        <span class="kw">print</span>(<span class="str">"FizzBuzz"</span>)
+    <span class="kw">elif</span> i % <span class="num">3</span> == <span class="num">0</span>:
+        <span class="kw">print</span>(<span class="str">"Fizz"</span>)
+    <span class="kw">elif</span> i % <span class="num">5</span> == <span class="num">0</span>:
+        <span class="kw">print</span>(<span class="str">"Buzz"</span>)
+    <span class="kw">else</span>:
+        <span class="kw">print</span>(i)</div>
+      <p>Try typing this in the Practice tab's Code Playground!</p>
+      <button class="btn-next show" onclick="completeLesson('challenge1')">Mark Complete +20 XP</button>`,
+  },
+  'challenge2': {
+    title: 'Stock Profit Calculator',
+    xp: 40,
+    content: `
+      <h2>Calculate Stock Profit</h2>
+      <p>Write a Python function that calculates profit/loss from a trade.</p>
+      <div class="code-block"><span class="kw">def</span> calc_profit(buy, sell, qty):
+    profit = (sell - buy) * qty
+    pct = ((sell - buy) / buy) * <span class="num">100</span>
+    <span class="kw">return</span> profit, pct
+
+p, pct = calc_profit(<span class="num">150</span>, <span class="num">189</span>, <span class="num">100</span>)
+<span class="kw">print</span>(<span class="str">f"Profit: ${p:.2f} ({pct:.1f}%)"</span>)
+<span class="cmt"># Output: Profit: $3900.00 (26.0%)</span></div>
+      <button class="btn-next show" onclick="completeLesson('challenge2')">Mark Complete +40 XP</button>`,
+  },
+  'challenge3': {
+    title: 'Moving Average',
+    xp: 80,
+    content: `
+      <h2>Simple Moving Average (SMA)</h2>
+      <p>Moving averages smooth out price data to identify trends. Traders use 50-day and 200-day SMAs.</p>
+      <div class="code-block"><span class="kw">def</span> sma(prices, window):
+    <span class="kw">return</span> [
+        <span class="kw">sum</span>(prices[i:i+window]) / window
+        <span class="kw">for</span> i <span class="kw">in</span> <span class="kw">range</span>(<span class="kw">len</span>(prices) - window + <span class="num">1</span>)
+    ]
+
+prices = [<span class="num">180</span>,<span class="num">182</span>,<span class="num">185</span>,<span class="num">189</span>,<span class="num">192</span>,<span class="num">188</span>,<span class="num">190</span>]
+<span class="kw">print</span>(sma(prices, <span class="num">3</span>))
+<span class="cmt"># [182.3, 185.3, 188.7, 189.7, 190.0]</span></div>
+      <div class="highlight-box"><div class="label">Trading Signal</div>When price crosses above the 50-day SMA → potential BUY signal 📈</div>
+      <button class="btn-next show" onclick="completeLesson('challenge3')">Mark Complete +80 XP</button>`,
+  },
+};
+
+const codeTopics = {
+  python: [
+    { title:'Variables & Types', sub:'int, str, float, bool', icon:'🔢', id:'py-intro' },
+    { title:'Lists & Dicts', sub:'Collections, indexing', icon:'📋', id:'py-intro' },
+    { title:'Functions', sub:'def, return, args', icon:'⚙️', id:'py-intro' },
+    { title:'File I/O', sub:'Read and write files', icon:'📂', id:'py-intro' },
+    { title:'Data Analysis', sub:'pandas, numpy basics', icon:'📊', id:'challenge3' },
+  ],
+  javascript: [
+    { title:'let & const', sub:'Variable declarations', icon:'📌', id:'js-intro' },
+    { title:'Arrow Functions', sub:'ES6+ syntax', icon:'➡️', id:'js-intro' },
+    { title:'Promises & Async', sub:'Async/await patterns', icon:'⏱️', id:'js-intro' },
+    { title:'DOM Manipulation', sub:'Update web pages', icon:'🌐', id:'js-intro' },
+  ],
+  html: [
+    { title:'HTML Structure', sub:'Tags, elements, nesting', icon:'🏗️', id:'js-intro' },
+    { title:'CSS Flexbox', sub:'Layouts and alignment', icon:'🎨', id:'js-intro' },
+    { title:'CSS Grid', sub:'Two-dimensional layouts', icon:'⬜', id:'js-intro' },
+  ],
+  sql: [
+    { title:'SELECT & WHERE', sub:'Query data', icon:'🔍', id:'py-intro' },
+    { title:'JOIN Tables', sub:'Combine data sources', icon:'🔗', id:'py-intro' },
+    { title:'Aggregate Funcs', sub:'SUM, AVG, COUNT', icon:'➕', id:'py-intro' },
+  ],
+  algorithms: [
+    { title:'Big O Notation', sub:'Algorithm complexity', icon:'📈', id:'challenge3' },
+    { title:'Sorting', sub:'Bubble, Quick, Merge', icon:'🔀', id:'challenge3' },
+    { title:'Binary Search', sub:'O(log n) searching', icon:'🎯', id:'challenge3' },
+  ],
+};
+
+const glossary = [
+  { term:'Bull Market', def:'A market in which prices are rising or expected to rise. Investors are optimistic.' },
+  { term:'Bear Market', def:'A market in which prices fall 20%+ from recent highs. Pessimism rules.' },
+  { term:'Dividend', def:'A portion of company profits paid regularly to shareholders as cash or shares.' },
+  { term:'Market Cap', def:'Total market value of a company\'s outstanding shares. Price × Shares.' },
+  { term:'P/E Ratio', def:'Price-to-Earnings ratio. How much investors pay per $1 of earnings.' },
+  { term:'Liquidity', def:'How easily an asset can be bought/sold without affecting its price.' },
+  { term:'Volatility', def:'The degree of variation in a trading price. High vol = high risk/reward.' },
+  { term:'Short Selling', def:'Borrowing shares to sell, hoping to buy back cheaper later.' },
+  { term:'IPO', def:'Initial Public Offering — when a private company first sells shares to the public.' },
+  { term:'Support Level', def:'A price level where buying interest is strong enough to prevent further decline.' },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────
+let xp = 340;
+let currentLang = 'python';
+let currentCode = '';
+let completedLessons = new Set(['py-intro']);
+
+// ── INIT ─────────────────────────────────────────────────────────
+window.onload = () => {
+  setTimeout(() => {
+    document.getElementById('splash').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('splash').style.display = 'none';
+      document.getElementById('app').classList.add('visible');
+      initTicker();
+      renderCodeTab('python');
+      renderGlossary();
+      setTimeout(() => { drawChart('aapl'); drawChart('btc'); }, 100);
+    }, 500);
+  }, 2000);
+};
+
+// ── TABS ─────────────────────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'markets') setTimeout(() => { drawChart('aapl'); drawChart('btc'); }, 50);
+}
+
+// ── LESSONS ─────────────────────────────────────────────────────
+function openLesson(id) {
+  const l = lessons[id];
+  if (!l) return;
+  document.getElementById('lesson-title').textContent = l.title;
+  document.getElementById('lesson-content').innerHTML = l.content;
+  document.getElementById('lesson-view').classList.add('open');
+  document.querySelector('.xp-pill .xp-pill').textContent = '+' + l.xp + ' XP';
+  // reset quiz
+  document.querySelectorAll('.quiz-opt').forEach(b => { b.classList.remove('correct','wrong'); b.disabled = false; });
+  const fb = document.getElementById('qfb');
+  if (fb) { fb.classList.remove('show','ok','bad'); }
+  const nx = document.getElementById('btn-next');
+  if (nx) nx.classList.remove('show');
+}
+function closeLesson() {
+  document.getElementById('lesson-view').classList.remove('open');
+}
+
+function answer(btn, correct) {
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach(b => b.disabled = true);
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  const fb = document.getElementById('qfb');
+  if (fb) {
+    fb.classList.add('show', correct ? 'ok' : 'bad');
+    if (!correct) fb.textContent = '✗ Not quite. Try reviewing the lesson again!';
+  }
+  const nx = document.getElementById('btn-next');
+  if (correct && nx) nx.classList.add('show');
+}
+
+function completeLesson(id) {
+  const l = lessons[id];
+  if (!l) return;
+  if (!completedLessons.has(id)) {
+    xp += l.xp;
+    completedLessons.add(id);
+    document.getElementById('xp-count').textContent = xp + ' XP';
+    document.getElementById('s-xp').textContent = xp;
+    document.getElementById('level-bar').style.width = Math.min(100, (xp / 500) * 100) + '%';
+    closeLesson();
+    showToast('🎉 +' + l.xp + ' XP earned!');
+  } else {
+    closeLesson();
+    showToast('✓ Already completed!');
+  }
+}
+
+// ── CODE TABS ─────────────────────────────────────────────────────
+function switchCodeTab(lang, el) {
+  document.querySelectorAll('#code-tabs .pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderCodeTab(lang);
+}
+function renderCodeTab(lang) {
+  const items = codeTopics[lang] || [];
+  let html = '';
+  items.forEach(item => {
+    const done = completedLessons.has(item.id);
+    html += `<div class="card" onclick="openLesson('${item.id}')">
+      <div class="card-row">
+        <div class="card-icon blue">${item.icon}</div>
+        <div><div class="card-title">${item.title}</div><div class="card-sub">${item.sub}</div></div>
+        <div class="card-badge ${done ? 'done' : 'new'}">${done ? '✓' : '+30 XP'}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('code-content').innerHTML = html;
+}
+
+// ── GLOSSARY ─────────────────────────────────────────────────────
+function renderGlossary() {
+  document.getElementById('glossary-list').innerHTML = glossary.map(g =>
+    `<div class="glossary-item">
+      <div class="glossary-term">${g.term}</div>
+      <div class="glossary-def">${g.def}</div>
+    </div>`
+  ).join('');
+}
+
+// ── TICKER ─────────────────────────────────────────────────────────
+const tickerData = [
+  { sym:'AAPL', price:'$189.42', chg:'+1.84%', up:true },
+  { sym:'GOOGL', price:'$175.30', chg:'+0.92%', up:true },
+  { sym:'TSLA', price:'$251.10', chg:'-2.34%', up:false },
+  { sym:'MSFT', price:'$415.80', chg:'+0.55%', up:true },
+  { sym:'BTC', price:'$61.2K', chg:'-2.13%', up:false },
+  { sym:'ETH', price:'$3,412', chg:'+1.20%', up:true },
+  { sym:'NVDA', price:'$875.50', chg:'+3.21%', up:true },
+  { sym:'AMZN', price:'$185.20', chg:'-0.44%', up:false },
+];
+function initTicker() {
+  const t = document.getElementById('ticker');
+  const items = [...tickerData, ...tickerData]; // duplicate for seamless loop
+  t.innerHTML = items.map(d => `
+    <div class="ticker-item">
+      <div class="ticker-sym">${d.sym}</div>
+      <div class="ticker-price">${d.price}</div>
+      <div class="ticker-chg ${d.up ? 'up' : 'down'}">${d.chg}</div>
+    </div>`).join('');
+}
+
+// ── CHARTS ─────────────────────────────────────────────────────────
+function genPrices(base, n, vol) {
+  let p = base, arr = [];
+  for (let i = 0; i < n; i++) { p += (Math.random() - 0.48) * vol; arr.push(Math.max(p, base * 0.8)); }
+  return arr;
+}
+function drawChart(id) {
+  const canvas = document.getElementById('chart-' + id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio || 300;
+  canvas.height = 70 * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const w = canvas.offsetWidth, h = 70;
+  const prices = id === 'aapl' ? genPrices(185, 30, 3) : genPrices(60000, 30, 1200);
+  const mn = Math.min(...prices), mx = Math.max(...prices);
+  const sx = w / (prices.length - 1), sy = (h - 10) / (mx - mn);
+  const pts = prices.map((p, i) => [i * sx, h - 5 - (p - mn) * sy]);
+  const isUp = prices[prices.length - 1] > prices[0];
+  const color = isUp ? '#10b981' : '#ef4444';
+  ctx.clearRect(0, 0, w, h);
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, isUp ? 'rgba(16,185,129,.25)' : 'rgba(239,68,68,.25)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  pts.forEach(p => ctx.lineTo(p[0], p[1]));
+  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  pts.forEach(p => ctx.lineTo(p[0], p[1]));
+  ctx.strokeStyle = color; ctx.lineWidth = 2;
+  ctx.lineJoin = 'round'; ctx.stroke();
+}
+function redraw(id, el, period) {
+  el.closest('.chart-card').querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  drawChart(id);
+}
+
+// ── CODE PLAYGROUND ─────────────────────────────────────────────────
+function setLang(lang, el) {
+  currentLang = lang;
+  document.querySelectorAll('#lang-tabs .pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('editor-lang').textContent = lang;
+  const ta = document.getElementById('code-editor');
+  if (lang === 'python') {
+    ta.placeholder = '# Write Python here...\nx = 10\ny = 20\nprint(x + y)';
+  } else {
+    ta.placeholder = '// Write JavaScript here...\nlet x = 10;\nlet y = 20;\nconsole.log(x + y);';
+  }
+  document.getElementById('code-output').textContent = 'Output will appear here...';
+}
+
+function runCode() {
+  const code = document.getElementById('code-editor').value.trim();
+  const out = document.getElementById('code-output');
+  if (!code) { out.textContent = 'Nothing to run.'; return; }
+  let result = '';
+  // Simulate simple outputs
+  if (code.includes('print(')) {
+    const matches = code.match(/print\((.+?)\)/g) || [];
+    result = matches.map(m => {
+      let inner = m.slice(6, -1);
+      // Evaluate simple f-strings and expressions
+      inner = inner.replace(/f["'](.+?)["']/g, (_, s) => s.replace(/\{([^}]+)\}/g, (__, expr) => {
+        try { return eval(expr.replace(/\*\*/g,'**')); } catch(e) { return expr; }
+      }));
+      inner = inner.replace(/^["']|["']$/g, '');
+      // Try eval for math
+      try { const r = eval(m.slice(6, -1)); if (r !== undefined) inner = String(r); } catch(e) {}
+      return inner;
+    }).join('\n');
+  } else if (code.includes('console.log(')) {
+    const matches = code.match(/console\.log\((.+?)\)/g) || [];
+    result = matches.map(m => {
+      try { return String(eval(m.slice(12, -1))); } catch(e) { return m.slice(12, -1); }
+    }).join('\n');
+  } else {
+    // Try direct eval for JS
+    try {
+      const logs = [];
+      const fakeConsole = { log: (...a) => logs.push(a.join(' ')) };
+      const fn = new Function('console', code);
+      fn(fakeConsole);
+      result = logs.join('\n') || '✓ Code ran (no output)';
+    } catch (e) {
+      result = '⚠ ' + e.message;
+    }
+  }
+  out.textContent = result || '✓ Code executed successfully';
+  out.style.color = result.startsWith('⚠') ? 'var(--red)' : 'var(--green)';
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
